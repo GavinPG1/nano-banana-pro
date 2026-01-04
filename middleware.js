@@ -1,31 +1,36 @@
-const USERNAME = "admin";
-const PASSWORD = "GGboy2338";
+import { NextResponse } from 'next/server';
 
-export async function onRequest(context) {
-  const { request, next, env } = context;
-  const authHeader = request.headers.get('Authorization');
+// 必须导出名为 middleware 的函数
+export function middleware(request) {
+  const authHeader = request.headers.get('authorization');
 
   if (!authHeader) {
-    return new Response('需要身份验证', {
+    return new Response('Authentication required', {
       status: 401,
-      headers: { 'WWW-Authenticate': 'Basic realm="Secure Site"' }
+      headers: { 'WWW-Authenticate': 'Basic realm="Secure Site"' },
     });
   }
 
-  const auth = authHeader.split(' ')[1];
   try {
-    const [user, pass] = atob(auth).split(':');
+    const auth = authHeader.split(' ')[1];
+    // 使用 Buffer 解析 Base64
+    const decoded = Buffer.from(auth, 'base64').toString();
+    const [user, pass] = decoded.split(':');
 
-    if (user === USERNAME && pass === PASSWORD) {
-      // 验证通过，执行 next() 就会自动去抓取 Pages 里的静态资源
-      return await next(); 
+    if (user === "admin" && pass === "GGboy2338") {
+      return NextResponse.next(); 
     }
   } catch (e) {
-    // 基础鉴权解析失败的处理
+    // 解析失败的处理
   }
 
-  return new Response('账号或密码错误', {
+  return new Response('Invalid credentials', {
     status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="Secure Site"' }
+    headers: { 'WWW-Authenticate': 'Basic realm="Secure Site"' },
   });
 }
+
+// 匹配路径配置
+export const config = {
+  matcher: '/:path*',
+};
