@@ -11,17 +11,12 @@ export function middleware(request) {
     });
   }
 
-  try {
-    const auth = authHeader.split(' ')[1];
-    // 使用 Buffer 解析 Base64
-    const decoded = Buffer.from(auth, 'base64').toString();
-    const [user, pass] = decoded.split(':');
+  const auth = authHeader.split(' ')[1];
+  const decoded = atob(auth); // 在 Edge Runtime 中可以直接使用 atob
+  const [user, pass] = decoded.split(':');
 
-    if (user === "admin" && pass === "GGboy2338") {
-      return NextResponse.next(); 
-    }
-  } catch (e) {
-    // 解析失败的处理
+  if (user === "admin" && pass === "GGboy2338") {
+    return NextResponse.next();
   }
 
   return new Response('Invalid credentials', {
@@ -30,7 +25,11 @@ export function middleware(request) {
   });
 }
 
-// 匹配路径配置
 export const config = {
-  matcher: '/:path*',
+  matcher: [
+    /*
+     * 匹配所有请求路径，除了特定的静态文件
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };
